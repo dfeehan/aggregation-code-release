@@ -25,25 +25,42 @@ library(patchwork)
 library(here)
 ```
 
+Create directories for data and output
+
+```{r}
+dir.create(here("raw-data"), showWarnings=FALSE)
+dir.create(here("out"), showWarnings=FALSE)
+```
+
+
 Load the data
 
 ```{r}
 # this should be whichever directory has the raw USMD data
 # the files are located in ../raw-data/lifetables/States/[STATE CODE]/[LT NAME].csv
 # (we can't distribute these data - you'll have to download them from https://usa.mortality.org/)
-usmd.data.dir <- here("../raw-data/")
+usmd.data.dir <- here("raw-data")
 
 # this is where we'll save outputs
-out.dir <- here("replication-out")
+out.dir <- here("out")
 ```
 
 ```{r}
-state_codes <- list.files(file.path(usmd.data.dir, 'lifetables', 'States'))
+zipped_csv_names <- grep('\\.csv$', unzip(file.path(usmd.data.dir, 'lifetables.zip'), list=TRUE)$Name, 
+                           ignore.case=TRUE, value=TRUE)
 
+state_codes <- c("AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", 
+"GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", 
+"ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", 
+"NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", 
+"TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY")
+```
+
+```{r}
 # quick function to get the life table for a state
-get_lt <- function(code, type='b', fmt="1x1") {
-  fullpath <- glue::glue("{usmd.data.dir}/lifetables/States/{code}/{code}_{type}ltper_{fmt}.csv")
-  this_lt <- read_csv(fullpath, 
+get_lt <- function(code, type='b', fmt="1x1", zipfn = file.path('raw-data', 'lifetables.zip')) {
+  fullpath <- glue::glue("lifetables/States/{code}/{code}_{type}ltper_{fmt}.csv")
+  this_lt <- read_csv(unz(zipfn, fullpath), 
                       col_types='ccdcdddddddd') %>%
              mutate(Age = HMDHFDplus::age2int(Age))
   return(this_lt)
@@ -57,7 +74,8 @@ lts_female <- setNames(map(state_codes, ~get_lt(.x, 'f')), state_codes)
 lts <- bind_rows(bind_rows(lts_both), bind_rows(lts_male), bind_rows(lts_female))
 
 # save this to avoid having to re-load the data all the time
-write_csv(lts, file=file.path(out.dir, 'usmd_lts.csv'))
+# (this is not necessary for replication, so commenting it out)
+#write_csv(lts, file=file.path(out.dir, 'usmd_lts.csv'))
 ```
 
 
