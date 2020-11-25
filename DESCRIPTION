@@ -1,0 +1,26 @@
+Type: Compendium
+Package: Replication for 'How do populations
+    aggregate?'
+Title: Replication code for 'How do populations aggregate?' 
+Version: 0.0.1
+Authors@R: 
+    person(given = "Dennis",
+           family = "Feehan",
+           role = c("aut", "cre"),
+           email = "feehan@berkeley.edu"),
+    person(given = "Elizabeth",
+           family = "Wrigley-Field",
+           role = c("aut", "cre"),
+           email = "ewf@umn.edu")
+Description: Compendium description
+License: Replication code for 'How do populations aggregate?' 
+Depends: 
+    dplyr,
+    glue,
+    here,
+    HMDHFDplus,
+    patchwork,
+    rmarkdown,
+    tidyverse
+Encoding: UTF-8
+LazyData: true
