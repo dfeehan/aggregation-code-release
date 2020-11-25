@@ -30,20 +30,28 @@ Create directories for data and output
 ```{r}
 dir.create(here("raw-data"), showWarnings=FALSE)
 dir.create(here("out"), showWarnings=FALSE)
-```
 
-
-Load the data
-
-```{r}
 # this should be whichever directory has the raw USMD data
-# the files are located in ../raw-data/lifetables/States/[STATE CODE]/[LT NAME].csv
-# (we can't distribute these data - you'll have to download them from https://usa.mortality.org/)
 usmd.data.dir <- here("raw-data")
 
 # this is where we'll save outputs
 out.dir <- here("out")
 ```
+
+This chunk will ask you for your US Mortality Database username and password.
+Then it will download the lifetables for you.
+
+```{r}
+usmd_uname <- readline("Your username:")
+usmd_pwd <- readline("Your password:")
+
+httr::GET(url = "https://usa.mortality.org/uploads/lifetables/lifetables.zip",
+          httr::authenticate(password=usmd_pwd, user=usmd_uname),
+          httr::write_disk(file.path(usmd.data.dir, 'lifetables.zip')))
+
+```
+
+Load the data
 
 ```{r}
 zipped_csv_names <- grep('\\.csv$', unzip(file.path(usmd.data.dir, 'lifetables.zip'), list=TRUE)$Name, 
@@ -133,10 +141,6 @@ reldiffs <- lts %>%
     # diff in unweighted arithmetic mean, relative to true aggregate value
     reldiff2 <- (uam.mx - direct.agg.mx) / direct.agg.mx
     
-    var.mx <- var(asdat$dx.over.Lx)
-    var.dx <- var(asdat$dx)
-    var.Lx <- var(asdat$Lx)
-    
     return(tibble(age=asdat$Age[1],
                   sex=asdat$Sex[1],
                   n=nrow(asdat),
@@ -149,11 +153,6 @@ reldiffs <- lts %>%
                   uam=uam.mx,
                   reldiff.am = reldiff,
                   reldiff.uam = reldiff2,
-                  # START TEMP
-                  var.mx = var.mx,
-                  var.dx = var.dx,
-                  var.Lx = var.Lx,
-                  # END TEMP
                   w.cv.mx = w.cv.mx,
                   w.cv2.mx = w.cv2.mx))
   }) %>%
