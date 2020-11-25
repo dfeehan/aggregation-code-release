@@ -1,0 +1,238 @@
+---
+title: "Aggregation example"
+output: html_notebook
+---
+
+November, 2020
+
+Replication code for empirical example in the Appendix of
+"How do populations aggregate?" by Dennis M. Feehan and Elizabeth Wrigley-Field
+
+NOTE: in order to run this code, you will have to download the life tables from the
+[United States Mortality Database](https://usa.mortality.org/).
+This requires that you register (which is free). 
+
+The file you need is the 
+[bundled archive called lifetables.zip](https://usa.mortality.org/uploads/lifetables/lifetables.zip).
+
+This analysis is based on the version of `lifetables.zip` that was downloaded from the USMD website on
+March 21, 2019.
+
+```{r}
+library(tidyverse)
+library(HMDHFDplus)
+library(patchwork)
+library(here)
+```
+
+Load the data
+
+```{r}
+# this should be whichever directory has the raw USMD data
+# the files are located in ../raw-data/lifetables/States/[STATE CODE]/[LT NAME].csv
+# (we can't distribute these data - you'll have to download them from https://usa.mortality.org/)
+usmd.data.dir <- here("../raw-data/")
+
+# this is where we'll save outputs
+out.dir <- here("replication-out")
+```
+
+```{r}
+state_codes <- list.files(file.path(usmd.data.dir, 'lifetables', 'States'))
+
+# quick function to get the life table for a state
+get_lt <- function(code, type='b', fmt="1x1") {
+  fullpath <- glue::glue("{usmd.data.dir}/lifetables/States/{code}/{code}_{type}ltper_{fmt}.csv")
+  this_lt <- read_csv(fullpath, 
+                      col_types='ccdcdddddddd') %>%
+             mutate(Age = HMDHFDplus::age2int(Age))
+  return(this_lt)
+}
+
+# read all the lifetables in
+lts_both <- setNames(map(state_codes, ~get_lt(.x, 'b')), state_codes)
+lts_male <- setNames(map(state_codes, ~get_lt(.x, 'm')), state_codes)
+lts_female <- setNames(map(state_codes, ~get_lt(.x, 'f')), state_codes)
+
+lts <- bind_rows(bind_rows(lts_both), bind_rows(lts_male), bind_rows(lts_female))
+
+# save this to avoid having to re-load the data all the time
+write_csv(lts, file=file.path(out.dir, 'usmd_lts.csv'))
+```
+
+
+```{r}
+# weighted harmonic mean of x, weights given by w
+hmean <- function(x, w) {
+  w.o.x <- w/x
+  return(sum(w) / sum(w.o.x))
+}
+```
+
+In these life tables, mx is not exactly equal to dx / Lx. We'll add a column that is.
+
+```{r}
+lts <- lts %>% mutate(dx.over.Lx = dx/Lx)
+```
+
+Go through and calculate reldiff by age and sex when aggregation is incorrect
+
+```{r}
+reldiffs <- lts %>%
+  filter(Year == 2015) %>%
+  split(list(.$Sex, .$Age)) %>% 
+  map_df(function(asdat) {
+    
+    ## only look at states with at least 1 death
+    asdat <- asdat %>% filter(dx > 0)
+    
+    direct.agg.mx <- sum(asdat$dx) / sum(asdat$Lx)
+    
+    # harmonic mean of rates, weighted by deaths (correct)
+    hm.mx.d <- hmean(asdat$dx.over.Lx, asdat$dx)
+    # arithmetic mean of rates, weighted by nLx (correct)
+    am.mx.L <- weighted.mean(asdat$dx.over.Lx, asdat$Lx)
+    
+    # arithmetic mean of rates, weighted by deaths (incorrect)
+    am.mx <- weighted.mean(asdat$dx.over.Lx, asdat$dx)
+    # arithmetic mean of rates, unweighted (incorrect)
+    uam.mx <- mean(asdat$dx.over.Lx)
+    
+    # arithmetic mean of death rates, weighted by exposure, squared
+    am.m.d2 <- weighted.mean(asdat$dx.over.Lx, asdat$Lx)^2
+    # arithmetic mean of squared death rates, weighted by exposure
+    am.m2.d <- weighted.mean(asdat$dx.over.Lx^2, asdat$Lx)
+    
+    # appropriately weighted cv2.mx
+    w.cv2.mx <- (am.m2.d/am.m.d2) - 1
+    
+    # the weighted cv (not squared)
+    w.cv.mx <- sqrt(w.cv2.mx)
+    
+    # diff in arithmetic mean weighted by deaths, relative to true aggregate value
+    reldiff <- (am.mx - direct.agg.mx) / direct.agg.mx
+    
+    # diff in unweighted arithmetic mean, relative to true aggregate value
+    reldiff2 <- (uam.mx - direct.agg.mx) / direct.agg.mx
+    
+    var.mx <- var(asdat$dx.over.Lx)
+    var.dx <- var(asdat$dx)
+    var.Lx <- var(asdat$Lx)
+    
+    return(tibble(age=asdat$Age[1],
+                  sex=asdat$Sex[1],
+                  n=nrow(asdat),
+                  direct=direct.agg.mx,
+                  # correct harmonic mean
+                  hm=hm.mx.d,
+                  # arithmetic mean with wrong weights
+                  am=am.mx,
+                  # arithmetic mean with no weights
+                  uam=uam.mx,
+                  reldiff.am = reldiff,
+                  reldiff.uam = reldiff2,
+                  # START TEMP
+                  var.mx = var.mx,
+                  var.dx = var.dx,
+                  var.Lx = var.Lx,
+                  # END TEMP
+                  w.cv.mx = w.cv.mx,
+                  w.cv2.mx = w.cv2.mx))
+  }) %>%
+  mutate(sex = dplyr::recode(sex,
+                             'b'='Both sexes',
+                             'm'='Males',
+                             'f'='Females')) 
+```
+
+
+```{r}
+fig.h <- 5
+fig.w <- 8
+
+am.reldiffs <- ggplot(reldiffs) +
+  geom_point(aes(x=age, y=reldiff.am, color=sex)) +
+  expand_limits(y=c(0,.6)) +
+  theme_minimal() +
+  ylab("Relative error") +
+  ggtitle("Relative error\nusing arithmetic mean\nweighted by deaths")
+#ggsave(plot=am.reldiffs, filename='am-reldiffs.pdf', height=fig.h, width=fig.w)
+am.reldiffs
+```
+
+```{r}
+uam.reldiffs <- ggplot(reldiffs) +
+  geom_point(aes(x=age, y=reldiff.uam, color=sex)) +
+  expand_limits(y=c(0,.6)) +
+  theme_minimal() +
+  ylab("Relative error") +
+  ggtitle("Relative error\nusing arithmetic mean\nunweighted")
+#ggsave(plot=uam.reldiffs, filename='uam-reldiffs.pdf', height=fig.h, width=fig.w)
+uam.reldiffs
+```
+
+```{r}
+fig.h <- 5
+fig.w <- 8
+
+relerr.plot <- (uam.reldiffs | am.reldiffs) + plot_annotation(tag_levels = 'A')
+ggsave(plot=relerr.plot, filename=file.path(out.dir, 'relerrs.pdf'), height=fig.h, width=fig.w)
+```
+
+Plot the actual aggregate death rates
+
+```{r}
+agg.pseudous <- ggplot(reldiffs) +
+  geom_point(aes(x=age, y=direct, color=sex)) +
+  theme_minimal() +
+  scale_y_log10() +
+  ylab("nMx") +
+  ggtitle("True aggregate\nage-specific death rate\n(logged)")
+#ggsave(plot=agg.pseudous, filename='agg-pseudo-us.pdf', height=fig.h, width=fig.w)
+agg.pseudous
+```
+
+Plot the variance in means
+
+```{r}
+cv.pseudous <- ggplot(reldiffs) +
+  geom_point(aes(x=age, y=w.cv.mx, color=sex)) +
+  theme_minimal() +
+  ylab("CV") +
+  ggtitle("Coefficient of variation in\ndeath rates\nacross sub-populations")
+
+cv.pseudous
+```
+
+
+```{r}
+fig.h <- 5
+fig.w <- 8
+
+pseudo.m.plot <- (agg.pseudous | cv.pseudous) + plot_annotation(tag_levels = 'A')
+ggsave(plot=pseudo.m.plot, filename=file.path(out.dir, 'pseudous-m.pdf'), height=fig.h, width=fig.w)
+```
+
+
+Directly compare rel-sd and error in second strategy
+
+```{r}
+cv2.relerr.plot <- ggplot(reldiffs) +
+  #geom_point(aes(x=w.cv2.mx, y=reldiff.am, color=log(direct))) +
+  geom_abline(intercept=0, slope=1, color='grey') +
+  geom_point(aes(x=w.cv2.mx, y=reldiff.am)) +
+  #xlim(0,.1) + ylim(0,.1) +
+  xlab("Squared coefficient of variation in death rates") +
+  ylab("Relative error\nusing arithmetic mean\nweighted by deaths") +
+  theme_minimal() +
+  coord_equal()
+
+cv2.relerr.plot
+```
+```{r}
+fig.h <- 5
+fig.w <- 5
+
+ggsave(plot=cv2.relerr.plot, 
+       filename=file.path(out.dir, 'cv2-relerr.pdf'), height=fig.h, width=fig.w)
+```
