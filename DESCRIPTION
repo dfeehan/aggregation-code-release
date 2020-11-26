@@ -10,7 +10,7 @@ Authors@R:
            email = "feehan@berkeley.edu"),
     person(given = "Elizabeth",
            family = "Wrigley-Field",
-           role = c("aut", "cre"),
+           role = c("aut"),
            email = "ewf@umn.edu"))
 Description: Compendium description
 License: Replication code for 'How do populations aggregate?' 
