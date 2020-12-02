@@ -2,4 +2,6 @@ raw-data/
 out/
 .DS_Store
 .Rproj.user/
+*.swp
+.Rhistory
 
