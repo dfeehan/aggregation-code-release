@@ -20,7 +20,7 @@ Files:
 
 Data:
 
-In order to download the data used in this code, you will need to create an account with the [US Mortality Database](https://usa.mortality.org/). This is free to do. When you run `replication.Rmd`, you will be asked to input your username and password, and the script will download the data for you.
+In order to download the data used in this code, you will need to create an account with the [US Mortality Database](https://usa.mortality.org/). This is free to do: open up the US Mortality Database homepage and click on the 'New user' link on the left-hand side of the page. When you run `replication.Rmd`, you will be asked to input your username and password, and the script will download the data for you.
 
 Output:
 
