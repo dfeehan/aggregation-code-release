@@ -1,7 +1,6 @@
 Type: Compendium
-Package: Replication for 'How do populations
-    aggregate?'
-Title: Replication code for 'How do populations aggregate?' 
+Package: Replication code for How do populations aggregate?
+Title: Replication code for How do populations aggregate?
 Version: 0.0.1
 Authors@R: 
     c(person(given = "Dennis",
