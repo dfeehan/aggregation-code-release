@@ -1,5 +1,5 @@
 Type: Compendium
-Package: Replication code for How do populations aggregate
+Package: replicationCodeForAggregation 
 Title: Replication code for How do populations aggregate
 Version: 0.0.1
 Authors@R: 
