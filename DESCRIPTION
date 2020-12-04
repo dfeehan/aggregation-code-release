@@ -1,6 +1,6 @@
 Type: Compendium
-Package: Replication code for How do populations aggregate?
-Title: Replication code for How do populations aggregate?
+Package: Replication code for How do populations aggregate
+Title: Replication code for How do populations aggregate
 Version: 0.0.1
 Authors@R: 
     c(person(given = "Dennis",
@@ -12,7 +12,7 @@ Authors@R:
            role = c("aut"),
            email = "ewf@umn.edu"))
 Description: Compendium description
-License: Replication code for 'How do populations aggregate?' 
+License: MIT 
 Depends: 
     dplyr,
     glue,
