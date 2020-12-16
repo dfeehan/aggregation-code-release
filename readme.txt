@@ -4,8 +4,6 @@
 
 # Replication code for "How do populations aggregate?"
 
-NB: this [readme.txt](readme.txt) follows the [Demographic Research replicability guidelines](https://www.demographic-research.org/info/guidelines.htm#Replicability).
-
 As of Dec 2, 2020, you can run the code on [mybinder.org](mybinder.org) by clicking on the 'Launch Binder' button above.
 
 The code was run using R version 3.6.3, and using the CRAN version of packages from 2020-11-25. You can see the list of packages used in this analysis by looking at the DESCRIPTION file.
@@ -20,7 +18,12 @@ Files:
 
 Data:
 
-In order to download the data used in this code, you will need to create an account with the [US Mortality Database](https://usa.mortality.org/). This is free to do: open up the US Mortality Database homepage and click on the 'New user' link on the left-hand side of the page. When you run `replication.Rmd`, you will be asked to input your username and password, and the script will download the data for you. The format of the downloaded data files is described [on the USMD website](https://usa.mortality.org/notes.php).
+In order to download the data used in this code, you will need to create an account with the [US Mortality Database](https://usa.mortality.org/). This is free to do: open up the US Mortality Database homepage and click on the 'New user' link on the left-hand side of the page. When you run `replication.Rmd`, you will be asked to input your username and password, and the script will download the data for you. The format of the downloaded data files is described [on the USMD website](https://usa.mortality.org/notes.php), and part of that website has been copied and pasted into the file [USMD_description.md](USMD_description.md).
+
+The User's Agreement for the US Mortality Database can be found at [https://usa.mortality.org/agreement.php](https://usa.mortality.org/agreement.php).
+
+Our analysis uses the lifetables for males, females, and for both sexes for all 50 US states plus Washington, D.C. in 2015. This is a total of 16,983 records.
+
 
 Output:
 
