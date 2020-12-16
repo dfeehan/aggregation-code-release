@@ -47,7 +47,8 @@ usmd_pwd <- readline("Your password:")
 
 httr::GET(url = "https://usa.mortality.org/uploads/lifetables/lifetables.zip",
           httr::authenticate(password=usmd_pwd, user=usmd_uname),
-          httr::write_disk(file.path(usmd.data.dir, 'lifetables.zip')))
+          httr::write_disk(file.path(usmd.data.dir, 'lifetables.zip'),
+                           overwrite = TRUE))
 
 ```
 
@@ -84,6 +85,12 @@ lts <- bind_rows(bind_rows(lts_both), bind_rows(lts_male), bind_rows(lts_female)
 # save this to avoid having to re-load the data all the time
 # (this is not necessary for replication, so commenting it out)
 #write_csv(lts, file=file.path(out.dir, 'usmd_lts.csv'))
+```
+
+Number of records
+
+```{r}
+lts %>% filter(Year == 2015) %>% nrow()
 ```
 
 
