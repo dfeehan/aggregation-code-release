@@ -22,7 +22,7 @@ In order to download the data used in this code, you will need to create an acco
 
 The User's Agreement for the US Mortality Database can be found at [https://usa.mortality.org/agreement.php](https://usa.mortality.org/agreement.php).
 
-Our analysis uses the lifetables for males, females, and for both sexes for all 50 US states plus Washington, D.C. in 2015. This is a total of 16,983 records.
+Our analysis uses the 1x1 (single calendar year and single year of age) lifetables for males, females, and for both sexes for all 50 US states plus Washington, D.C. in 2015. This is a total of 16,983 records.
 
 
 Output:
